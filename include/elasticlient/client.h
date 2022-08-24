@@ -194,6 +194,25 @@ class Client {
         }
     };
 
+  /// The Api-Key used for authentication for the client.
+  struct ApiKeyOption: public ClientOptionValue<std::string> {
+    explicit ApiKeyOption(std::string api_key)
+      : ClientOptionValue(api_key) {}
+  protected:
+    void accept(Implementation &) const override;
+  };
+
+  /// The Username Password pair used for authentication for the client.
+  struct UsernamePasswordOption: public ClientOption {
+    explicit UsernamePasswordOption(std::string user_name, std::string password)
+      : user_name_(user_name), password_(password) {}
+      std::string getUserName() const;
+    std::string getPassword() const;
+  protected:
+    std::string user_name_;
+    std::string password_;
+    void accept(Implementation &) const override;
+  };
 
     /**
      * Initialize the Client.

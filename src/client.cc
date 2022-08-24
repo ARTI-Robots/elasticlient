@@ -123,6 +123,21 @@ void Client::SSLOption::VerifyPeer::accept(SSLOptionImplementation &impl) const 
     impl.visit(*this);
 }
 
+void Client::ApiKeyOption::accept(Implementation &impl) const {
+  impl.visit(*this);
+}
+
+std::string Client::UsernamePasswordOption::getUserName() const {
+  return user_name_;
+}
+
+std::string Client::UsernamePasswordOption::getPassword() const {
+  return password_;
+}
+
+void Client::UsernamePasswordOption::accept(Implementation &impl) const {
+  impl.visit(*this);
+}
 
 Client::Client(const std::vector<std::string> &hostUrlList,
                std::int32_t timeout)
@@ -162,7 +177,17 @@ bool Client::Implementation::performRequestOnCurrentHost(Client::HTTPMethod meth
     cpr::Header header;
     if (!body.empty()) {
         header["Content-Type"] = "application/json; charset=utf-8";
+        if (!api_key_.empty())
+        {
+          header["Authorization"] = "ApiKey " + api_key_;
+        }
     }
+    std::stringstream header_stream;
+    for (const auto &header_element: header)
+    {
+      header_stream << header_element.first << ":" << header_element.second;
+    }
+
     session.SetHeader(header);
     session.SetBody(cpr::Body(body));
 
@@ -190,6 +215,8 @@ bool Client::Implementation::performRequestOnCurrentHost(Client::HTTPMethod meth
         default:
             throw std::runtime_error("This HTTP method is not implemented yet.");
     }
+  LOG(LogLevel::INFO, "Send to %s the header %s and the body %s.", entireUrl.c_str(), header_stream.str().c_str(),
+      body.c_str());
 
     LOG(LogLevel::INFO, "Host returned %ld in %lf s for %s.", response.status_code,
         response.elapsed, entireUrl.c_str());
@@ -306,6 +333,15 @@ void Client::Implementation::visit(const ProxiesOption &opt) {
 
 void Client::Implementation::visit(const SSLOption &opt) {
     session.SetSslOptions(opt.impl->getOptions());
+}
+
+void Client::Implementation::visit(const ApiKeyOption &opt) {
+  api_key_ = opt.getValue();
+}
+
+void Client::Implementation::visit(const UsernamePasswordOption &opt) {
+  cpr::Authentication authentication(opt.getUserName(), opt.getPassword());
+  session.SetAuth(authentication);
 }
 
 void Client::SSLOption::SSLOptionImplementation::visit(const CertFile &certFile) {

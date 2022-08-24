@@ -42,6 +42,7 @@ class Client::Implementation {
     cpr::Session session;
     uint32_t currentHostIndex, failCounter;
     RandomUIntGenerator uintGenerator;
+    std::string api_key_;
 
     friend class Client;
 
@@ -115,6 +116,10 @@ class Client::Implementation {
     void visit(const ProxiesOption &);
     /// Set SSL options from given instance.
     void visit(const SSLOption &);
+    /// Set api key options from given instance.
+    void visit(const ApiKeyOption &);
+  /// Set user name passowrd options from given instance.
+  void visit(const UsernamePasswordOption &);
 };
 
 
